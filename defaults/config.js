@@ -519,3 +519,4 @@ module.exports = {
     role: "admin"
   }
 ],
+};
