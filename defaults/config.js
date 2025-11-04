@@ -511,5 +511,11 @@ module.exports = {
 		// When set to `true`, this enables logging of raw IRC messages into each
 		// server window, displayed on the client.
 		raw: false,
-	},
-};
+		},
+		users: [
+  {
+    name: "shayan",
+    password: "123456",
+    role: "admin"
+  }
+],
