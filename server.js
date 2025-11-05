@@ -1,131 +1,99 @@
-// ===============================
-// 🧠 BOTING IRC + Web Server
-// ===============================
-
-// 1️⃣ کتابخانه‌ها
 const express = require("express");
-const http = require("http");
-const irc = require("irc");
-const moment = require("moment");
-
-// 2️⃣ تنظیمات سرور
+const IRC = require("irc-framework");
 const app = express();
-const PORT = process.env.PORT || 10000; // ← این خط باعث میشه Render خودش پورت رو بده
+const PORT = process.env.PORT || 10000;
 
-// 3️⃣ ایجاد سرور HTTP برای UptimeRobot و Render
 app.get("/", (req, res) => {
-  res.send(`
-    <h2>🤖 BOTING is online!</h2>
-    <p>Server time: ${moment().format("YYYY-MM-DD HH:mm:ss")}</p>
-    <p>Status: Running smoothly 🚀</p>
-  `);
+  res.send("🤖 BOTING IRC bot is online and running smoothly!");
 });
 
 app.listen(PORT, () => {
-  console.log(`✅ Server running on port ${PORT}`);
+  console.log(`🚀 Web server running on port ${PORT}`);
 });
 
-// ===============================
-// ⚙️ تنظیمات IRC Bot
-// ===============================
+// === IRC Bot Config ===
+const client = new IRC.Client();
 
-// اطلاعات اتصال
-const botName = "BOTING";
-const channels = ["#iran", "#gap", "#BOTING"];
+const BOT_NICK = "BOTING";
+const BOT_OWNER = "Artesh";
+const PASSWORD = "123654";
+const CHANNELS = ["#iran", "#gap", "#BoTiNG"];
+const COLORS = ["\x0304", "\x0308", "\x0310", "\x0312", "\x0309", "\x0307", "\x0303", "\x0313", "\x0314"];
 
-const client = new irc.Client("irc.mahkoosh.com", botName, {
-  channels: channels,
-  autoRejoin: true,
-  autoConnect: true,
-  retryCount: 9999,
-  retryDelay: 5000,
+let isActive = true;
+
+client.connect({
+  host: "irc.mahdkoosh.com",
+  port: 6667,
+  nick: BOT_NICK,
+  password: PASSWORD,
+  auto_reconnect: true,
+  username: "BOTING",
+  gecos: "Advanced IRC Bot"
 });
 
-// ===============================
-// 🤖 رفتارهای ربات
-// ===============================
-
-// خوش‌آمدگویی برای کاربران جدید
-const welcomeMessages = [
-  "🎉 خوش اومدی به سرور!",
-  "🔥 به جمع ما خوش اومدی!",
-  "💫 نورت زیاد!",
-  "😎 BOTING در خدمت شماست!",
-  "🎊 یه کاربر جدید! خوش اومدی!",
-];
-
-// تابع انتخاب پیام تصادفی بدون تکرار زیاد
-function randomWelcome() {
-  const msg = welcomeMessages[Math.floor(Math.random() * welcomeMessages.length)];
-  return msg;
-}
-
-// وقتی ربات به سرور وصل میشه
-client.addListener("registered", () => {
-  console.log("🤖 BOTING connected to IRC server successfully!");
+client.on("registered", () => {
+  CHANNELS.forEach(c => client.join(c));
+  console.log(`🤖 Connected as ${BOT_NICK}`);
 });
 
-// وقتی کسی وارد کانال شد
-client.addListener("join", (channel, nick) => {
-  if (nick === botName) return;
-  const message = `${nick}, ${randomWelcome()}`;
-  client.say(channel, message);
+client.on("message", (event) => {
+  if (!isActive) return;
 
-  // تشکر از نیک خاص
-  if (nick.toLowerCase() === "artesh") {
-    client.say("#BOTING", "🙏 تشکر از Art3sh برای ویرایش ربات 💪");
-  }
+  const msg = event.message.trim();
+  const nick = event.nick;
+  const channel = event.target;
 
-  // تشکر خاص از aMIR
-  if (nick.toLowerCase() === "amir") {
-    client.say("#BOTING", "⚡ aMIR joined — BOTING appreciates your presence 💎");
-  }
-});
-
-// پاسخ دادن به زمانی که اسم ربات صدا زده میشه (فارسی یا انگلیسی)
-client.addListener("message", (from, to, message) => {
-  const msg = message.toLowerCase();
-
-  // وقتی اسم ربات گفته شد
-  if (msg.includes("boting") || msg.includes("بوتینگ")) {
-    const replies = [
-      "👋 I'm here!",
-      "⚡ BOTING active!",
-      "💬 Yes? How can I help?",
-      "🤖 BOTING ready for action!",
-      "😄 At your service!",
-      "👀 Listening!",
+  // وقتی کسی اسم ربات را گفت
+  if (msg.toLowerCase().includes(BOT_NICK.toLowerCase())) {
+    const responses = [
+      "I'm here but busy right now.",
+      "Not available at the moment.",
+      "BOTING is online but sleeping mode 😴.",
+      "Hi there! BOTING at your service ⚡",
+      "Please contact my admin, I'm resting 💤"
     ];
-    const reply = replies[Math.floor(Math.random() * replies.length)];
-    client.say(to, reply);
+    const reply = responses[Math.floor(Math.random() * responses.length)];
+    client.say(channel, `${nick}: ${reply}`);
   }
 
-  // وقتی کسی گفت artesh
-  if (msg.includes("artesh")) {
-    client.say(to, "💎 Special thanks to Art3sh for maintaining BOTING!");
-  }
+  // فقط نیک Artesh می‌تواند کنترل کند
+  if (nick === BOT_OWNER) {
+    if (msg.toLowerCase().startsWith("off amir")) {
+      isActive = false;
+      client.say(channel, `${nick}: BOTING has been turned off 📴`);
+    }
 
-  // تغییر نام ربات فقط توسط نیک aMIR
-  if (from.toLowerCase() === "amir" && msg.startsWith("amir change nick")) {
-    const parts = msg.split(" ");
-    const newNick = parts[3];
-    if (newNick) {
-      client.send("NICK", newNick);
-      client.say(to, `✅ Nickname changed to ${newNick}`);
-    } else {
-      client.say(to, "⚠️ Please specify a new nickname after 'amir change nick'");
+    if (msg.toLowerCase().startsWith("on amir")) {
+      isActive = true;
+      client.say(channel, `${nick}: BOTING is now active again ⚡`);
+    }
+
+    if (msg.toLowerCase().startsWith("amir change nick")) {
+      const parts = msg.split(" ");
+      const newNick = parts[3] || "BOTING";
+      client.changeNick(newNick);
+      client.say(channel, `Nickname changed to ${newNick} ✅`);
     }
   }
 
-  // خاموش شدن ربات فقط توسط aMIR
-  if (from.toLowerCase() === "amir" && msg === "off amir") {
-    client.say(to, "🛑 BOTING is going offline...");
-    client.disconnect("Shutdown command by aMIR");
-    process.exit(0);
+  // تشکر از Artesh
+  if (msg.toLowerCase().includes("artesh")) {
+    client.say(channel, `Thanks ${nick} for mentioning Artesh 🙌`);
   }
 });
 
-// خطایابی
-client.addListener("error", (message) => {
-  console.error("❌ IRC Error:", message);
+// پیام خوش‌آمدگویی رنگی
+client.on("join", (event) => {
+  const color = COLORS[Math.floor(Math.random() * COLORS.length)];
+  const nick = event.nick;
+  const channel = event.channel;
+  const message = `${color}Welcome ${nick}! 🌈 BOTING is happy to see you here!`;
+  client.say(channel, message);
+
+  if (nick === BOT_OWNER) {
+    client.say(channel, `🎖️ Thank you ${BOT_OWNER} for joining! BOTING appreciates your presence.`);
+  }
 });
+
+client.on("close", () => console.log("🔌 Disconnected. Reconnecting..."));
