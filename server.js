@@ -147,7 +147,8 @@ client.on("join", (ev) => {
   if (!nick) return;
   ensureChannel(channel);
   updateSeen(nick, channel, "<joined>");
-  if (nick.toLowerCase() === client.nick.toLowerCase()) return; // ignore bot itself
+  if (!client.nick || !nick) return;
+if (nick.toLowerCase() === client.nick.toLowerCase()) return; // ignore bot itself
 
   // check active flag for channel
   const chSet = data.channelSettings[channel] || { welcome: true, active: true };
