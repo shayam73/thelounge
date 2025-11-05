@@ -1,20 +1,36 @@
 {
   "name": "thelounge",
   "version": "1.0.0",
-  "description": "My Lounge Web App",
-  "main": "dist/server/index.js",
+  "description": "My Lounge web app deployed on Render",
+  "main": "index.js",
   "scripts": {
-    "dev": "yarn run build && node ./dist/server/index.js",
-    "build": "yarn install && yarn run compile",
-    "start": "node ./dist/server/index.js"
+    "start": "node index.js",
+    "dev": "nodemon index.js",
+    "test": "echo \"No test specified\" && exit 0"
   },
   "engines": {
-    "node": ">=18.x"
+    "node": ">=18.x",
+    "npm": ">=8.x",
+    "yarn": ">=1.22.x"
   },
   "dependencies": {
-    "express": "^4.19.2"
+    "express": "^4.19.2",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.5"
   },
   "devDependencies": {
-    "@types/node": "^22.0.0"
-  }
+    "nodemon": "^3.1.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/yourusername/thelounge.git"
+  },
+  "keywords": [
+    "thelounge",
+    "render",
+    "express",
+    "nodejs"
+  ],
+  "author": "Your Name",
+  "license": "MIT"
 }
