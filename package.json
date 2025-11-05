@@ -1,11 +1,12 @@
 {
   "name": "thelounge-server",
   "version": "1.0.0",
-  "description": "Simple Express + Socket.IO server for The Lounge",
+  "description": "Custom TheLounge Express Server",
   "main": "server.js",
   "type": "module",
   "scripts": {
-    "start": "node server.js"
+    "start": "node server.js",
+    "build": "echo 'no build step'"
   },
   "dependencies": {
     "express": "^4.19.2",
