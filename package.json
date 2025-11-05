@@ -1,30 +1,20 @@
 {
   "name": "thelounge",
-  "description": "The self-hosted Web IRC client",
-  "version": "4.4.3",
-  "preferGlobal": true,
-  "bin": {
-    "thelounge": "index.js"
-  },
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/thelounge/thelounge"
-  },
-  "homepage": "https://thelounge.chat/",
+  "version": "1.0.0",
+  "description": "My Lounge Web App",
+  "main": "dist/server/index.js",
   "scripts": {
-    "build": "npm install --legacy-peer-deps",
-    "start": "node index.js",
-    "dev": "cross-env NODE_ENV=development node index.js"
+    "dev": "yarn run build && node ./dist/server/index.js",
+    "build": "yarn install && yarn run compile",
+    "start": "node ./dist/server/index.js"
   },
   "engines": {
-    "node": ">=18.x",
-    "yarn": ">=1.22.x"
+    "node": ">=18.x"
   },
-  "keywords": [
-    "irc",
-    "chat",
-    "thelounge",
-    "self-hosted",
-    "web-client"
-  ]
+  "dependencies": {
+    "express": "^4.19.2"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0"
+  }
 }
