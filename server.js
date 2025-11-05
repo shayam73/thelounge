@@ -7,51 +7,45 @@ const app = express();
 const httpServer = createServer(app);
 const io = new Server(httpServer);
 
-// ✅ وب‌سرور ساده برای تست
+// ✅ وب‌سرور ساده
 app.get("/", (req, res) => {
-  res.send("🚀 TheLounge Express Server connected to IRC!");
+  res.send("🚀 TheLounge Custom Express + IRC Server is running!");
 });
 
-// ✅ اتصال به سرور IRC
-const client = new IRC.Client();
+// ✅ اتصال به IRC
+const irc = new IRC.Client();
 
-client.connect({
-  host: "irc.mahdkoosh.com",
-  port: 6667, // اگر SSL داری، پورت 6697 بذار و tls: true اضافه کن
-  nick: "TheLoungeBot",
-  username: "thelounge",
-  gecos: "Web IRC Bot"
+irc.connect({
+  host: "irc.mahdkoosh.com", // ← آدرس سرور IRC
+  port: 6667,                // پورت پیش‌فرض IRC (اگه SSL هست: 6697)
+  nick: "RenderBot",         // نیک مورد نظر
+  username: "RenderBot",
+  gecos: "Render IRC Bot"
 });
 
-client.on("registered", () => {
-  console.log("✅ Connected to IRC server irc.mahdkoosh.com");
-  client.join("#general"); // کانال پیش‌فرض، می‌تونی عوضش کنی
+// ✅ وقتی وصل شد
+irc.on("registered", () => {
+  console.log("✅ Connected to IRC server!");
+  irc.join("#iran"); // ← کانال مورد نظر رو اینجا بزن
 });
 
-client.on("message", (event) => {
-  console.log(`[${event.target}] <${event.nick}> ${event.message}`);
-  io.emit("irc-message", {
-    channel: event.target,
-    nick: event.nick,
-    message: event.message
-  });
+// ✅ وقتی پیامی در IRC دریافت شد
+irc.on("message", (event) => {
+  console.log(`[IRC] <${event.nick}> ${event.message}`);
+  io.emit("irc-message", { nick: event.nick, message: event.message });
 });
 
-client.on("error", (err) => {
-  console.error("❌ IRC Error:", err);
-});
-
-// ✅ ارتباط Socket.io برای کاربران وب
+// ✅ وقتی کاربر جدید در وب‌سوکت وصل شد
 io.on("connection", (socket) => {
-  console.log("🟢 Web client connected:", socket.id);
+  console.log("🌐 WebSocket user connected:", socket.id);
 
-  socket.on("send-message", (data) => {
-    client.say(data.channel, data.message);
+  socket.on("send-message", (msg) => {
+    irc.say("#test", msg); // ← پیام رو به کانال IRC بفرست
   });
 });
 
-// ✅ شروع سرور HTTP
+// ✅ اجرای سرور HTTP (برای Render)
 const PORT = process.env.PORT || 3000;
 httpServer.listen(PORT, () => {
-  console.log(`✅ Web server running on port ${PORT}`);
+  console.log(`🚀 Server running on port ${PORT}`);
 });
