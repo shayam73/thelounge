@@ -1,24 +1,20 @@
 import express from "express";
-import http from "http";
+import { createServer } from "http";
 import { Server } from "socket.io";
-import chalk from "chalk";
 
 const app = express();
-const server = http.createServer(app);
-const io = new Server(server);
+const httpServer = createServer(app);
+const io = new Server(httpServer);
 
 app.get("/", (req, res) => {
-  res.send("✅ The Lounge custom server is running successfully!");
+  res.send("🚀 TheLounge Express Server is running!");
 });
 
 io.on("connection", (socket) => {
-  console.log(chalk.green("🟢 A user connected"));
-  socket.on("disconnect", () => {
-    console.log(chalk.yellow("🔴 A user disconnected"));
-  });
+  console.log("User connected:", socket.id);
 });
 
 const PORT = process.env.PORT || 3000;
-server.listen(PORT, () => {
-  console.log(chalk.blue(`🚀 Server running on port ${PORT}`));
+httpServer.listen(PORT, () => {
+  console.log(`✅ Server running on port ${PORT}`);
 });
