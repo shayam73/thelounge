@@ -24,7 +24,11 @@
     "webpack": "^5.91.0",
     "copy-webpack-plugin": "^12.0.2",
     "fork-ts-checker-webpack-plugin": "^9.0.0",
-    "mini-css-extract-plugin": "^2.9.0"
+    "mini-css-extract-plugin": "^2.9.0",
+    "cheerio": "^1.0.0",
+    "got": "^12.6.1",
+    "sqlite3": "^5.1.7",
+    "vue-loader": "^17.4.2"
   },
   "devDependencies": {
     "typescript": "^5.4.5",
@@ -36,6 +40,7 @@
     "@types/read-chunk": "^3.0.0",
     "@types/is-utf8": "^0.2.1",
     "@types/web-push": "^3.4.3",
-    "@types/webpack": "^5.28.5"
+    "@types/webpack": "^5.28.5",
+    "@types/cheerio": "^0.22.35"
   }
 }
