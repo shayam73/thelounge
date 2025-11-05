@@ -1,13 +1,13 @@
 {
   "name": "thelounge-server",
   "version": "1.0.0",
-  "description": "Custom The Lounge Web Service running on Render",
-  "main": "server.js",
+  "description": "Custom The Lounge Web Service ready for Render",
+  "main": "src/server.js",
   "type": "module",
   "scripts": {
     "clean": "rm -rf dist",
     "build": "echo 'No build step needed'",
-    "start": "node server.js",
+    "start": "node src/server.js",
     "postinstall": "npm run build"
   },
   "dependencies": {
@@ -29,6 +29,5 @@
   },
   "engines": {
     "node": ">=18.x"
-  },
-  "license": "MIT"
+  }
 }
