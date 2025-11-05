@@ -512,11 +512,27 @@ module.exports = {
 		// server window, displayed on the client.
 		raw: false,
 		},
-		users: [
+users: [
   {
     name: "shayan",
     password: "123456",
     role: "admin"
   }
 ],
+
+// ==== Custom IRC network connection ====
+networks: [
+  {
+    name: "MahdkooshIRC",       // نام شبکه در The Lounge
+    host: "irc.mahdkoosh.com",  // آدرس سرور IRC
+    port: 6667,                 // اگر SSL داری بذار 6697
+    tls: false,                 // اگر SSL داری true کن
+    nick: "shayan",             // نیک پیش‌فرض
+    username: "thelounge",
+    realname: "Web IRC Client",
+    channels: ["#gap"],     // کانال‌هایی که خودکار جوین میشه
+  },
+],
+// ==== End Custom IRC network connection ====
+};
 };
