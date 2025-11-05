@@ -2,18 +2,18 @@
   "compilerOptions": {
     "target": "ES2020",
     "module": "CommonJS",
-    "rootDir": "src",
+    "rootDir": "./",
     "outDir": "dist",
     "esModuleInterop": true,
     "skipLibCheck": true,
     "strict": false,
     "forceConsistentCasingInFileNames": true
   },
-  "include": ["src/**/*"],
+  "include": ["**/*.ts"],
   "exclude": [
     "node_modules",
     "dist",
-    "src/babel.config.cjs",
+    "babel.config.cjs",
     "**/*.test.ts",
     "**/*.spec.ts"
   ]
