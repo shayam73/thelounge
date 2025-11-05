@@ -1,0 +1,18 @@
+{
+  "owners": ["Artesh"],
+  "scores": {},
+  "seen": {},
+  "channelSettings": {
+    "#iran": { "welcome": true, "active": true },
+    "#gap": { "welcome": true, "active": true },
+    "#BOTING": { "welcome": true, "active": true }
+  },
+  "welcomeCounter": 0,
+  "usedResponses": {
+    "greetings": [],
+    "arteshReplies": [],
+    "riddlesUsed": []
+  },
+  "currentRiddles": {},
+  "games": {}
+}
