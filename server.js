@@ -11,7 +11,7 @@ const httpServer = createServer(app);
 const io = new Server(httpServer);
 
 // ---------- Config (from env or defaults) ----------
-const BOT_NICK = process.env.BOT_NICK || "aMIR";
+const BOT_NICK = process.env.BOT_NICK || "BOTING";
 const NICKSERV_PASS = process.env.NICKSERV_PASS || ""; // اگر رجیستر نیست خالی بذار
 const ADMIN_TOKEN = process.env.ADMIN_TOKEN || ""; // برای محافظت endpoint تغییر نیک
 const IRC_HOST = process.env.IRC_HOST || "irc.mahdkoosh.com";
