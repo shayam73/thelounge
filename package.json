@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "description": "Custom TheLounge Express + IRC Server",
   "main": "server.js",
-  "type": "commonjs"
+  "type": "commonjs",
   "scripts": {
     "start": "node server.js",
     "build": "echo 'no build step'"
