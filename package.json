@@ -1,36 +1,47 @@
 {
   "name": "thelounge",
-  "version": "1.0.0",
-  "description": "My Lounge web app deployed on Render",
+  "version": "4.4.3",
+  "description": "The self-hosted web IRC client",
   "main": "index.js",
   "scripts": {
-    "start": "node index.js",
-    "dev": "nodemon index.js",
-    "test": "echo \"No test specified\" && exit 0"
+    "clean": "rm -rf dist",
+    "build:client": "webpack --mode production",
+    "build:server": "npm install --legacy-peer-deps",
+    "build": "npm run clean && npm run build:server && npm run build:client",
+    "prestart": "npm run build",
+    "start": "node index.js start --host 0.0.0.0",
+    "dev": "cross-env NODE_ENV=development node index.js",
+    "lint": "eslint . --ext .js,.ts",
+    "format": "prettier --write ."
   },
   "engines": {
     "node": ">=18.x",
-    "npm": ">=8.x",
-    "yarn": ">=1.22.x"
+    "npm": ">=8.x"
   },
   "dependencies": {
+    "cross-env": "^7.0.3",
     "express": "^4.19.2",
-    "cors": "^2.8.5",
+    "webpack": "^5.91.0",
+    "webpack-cli": "^5.1.4",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.3.3",
     "dotenv": "^16.4.5"
   },
   "devDependencies": {
-    "nodemon": "^3.1.0"
+    "eslint": "^8.57.0",
+    "prettier": "^3.3.3"
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/yourusername/thelounge.git"
+    "url": "https://github.com/thelounge/thelounge.git"
   },
   "keywords": [
     "thelounge",
-    "render",
-    "express",
-    "nodejs"
+    "irc",
+    "web",
+    "chat",
+    "render"
   ],
-  "author": "Your Name",
+  "author": "The Lounge Community",
   "license": "MIT"
 }
