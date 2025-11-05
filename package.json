@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "clean": "rm -rf dist",
-    "build:server": "npm install --legacy-peer-deps",
+    "build:server": "tsc --project tsconfig.json",
     "build:client": "webpack --mode production || true",
     "build": "npm run clean && npm run build:server && npm run build:client",
     "prestart": "npm run build",
