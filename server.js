@@ -10,7 +10,7 @@ const owners = ["YourNick"]; // 👈 اسم IRC خودت رو اینجا بذا�
 const scores = {};
 
 // 🛰️ اتصال ربات به سرور IRC
-const client = new irc.Client("irc.libera.chat", "BOTING", {
+const client = new irc.Client("irc.mahdkoosh.com", "BOTING", {
   channels: ["#gap", "#iran", "#boting"],
 });
 
