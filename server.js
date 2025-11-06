@@ -1,209 +1,164 @@
-const IRC = require("irc-framework");
+const irc = require("irc");
 const fs = require("fs");
 
-const BOT_NICK = "BOTING";
-const IRC_HOST = "irc.mahdkoosh.com";
-const IRC_PORT = 6667;
-const CHANNELS = ["#gap", "#iran", "#BOTING"];
-const OWNER = "Artesh";
+const config = {
+  server: "irc.mahdkoosh.com",
+  botName: "BOTING",
+  channels: ["#gap", "#iran", "#BOTING"],
+  owner: ["Artesh"], // صاحبان اولیه
+};
 
-const startTime = Date.now();
-let welcomeEnabled = {};
-let owners = [OWNER];
-let seen = {};
+// دیتابیس ساده برای امتیازها و مالکان
+let owners = new Set(config.owner);
 let scores = {};
-let activeChistans = {};
+let riddles = JSON.parse(fs.readFileSync("riddles.json", "utf8"));
 
-// ---- تابع ذخیره دیتا ----
-function saveData() {
-  fs.writeFileSync("data.json", JSON.stringify({ seen, scores, owners, welcomeEnabled }, null, 2));
-}
-
-// ---- بارگذاری دیتا ----
-if (fs.existsSync("data.json")) {
-  const data = JSON.parse(fs.readFileSync("data.json"));
-  seen = data.seen || {};
-  scores = data.scores || {};
-  owners = data.owners || [OWNER];
-  welcomeEnabled = data.welcomeEnabled || {};
-}
-
-// ---- تعریف کلاینت ----
-const bot = new IRC.Client();
-bot.connect({
-  host: IRC_HOST,
-  port: IRC_PORT,
-  nick: BOT_NICK,
-  gecos: "BOTING Smart Bot v4.0",
-  username: BOT_NICK,
-  auto_reconnect: true,
+// ساخت بات IRC
+const bot = new irc.Client(config.server, config.botName, {
+  channels: config.channels,
+  autoConnect: true,
 });
 
-// ---- ورود ربات ----
-bot.on("registered", () => {
-  console.log("✅ BOTING connected to", IRC_HOST);
-  CHANNELS.forEach((ch) => bot.join(ch));
+// زمان ورود
+const startTime = new Date();
+
+// پیام ورود
+bot.addListener("join", function (channel, nick) {
+  if (nick === config.botName) {
+    console.log(`Joined ${channel}`);
+  } else if (nick.toLowerCase() === "artesh") {
+    bot.say(channel, `⭐ خوش اومدی ارتش! ممنون برای ساخت این ربات! 🌟`);
+  } else {
+    bot.say(channel, `Welcome ${nick}! خوش اومدی به ${channel}`);
+  }
 });
 
-// ---- پیام‌ها ----
-bot.on("message", (event) => {
-  const { nick, target, message } = event;
-  if (!nick || nick === BOT_NICK) return;
+// تابع خوشامد
+function welcomeUser(channel, nick) {
+  bot.say(channel, `Welcome ${nick}! خوش اومدی به ${channel}`);
+}
 
-  seen[nick] = { time: Date.now(), channel: target, message };
-  saveData();
+// دستورها
+bot.addListener("message", function (from, to, text) {
+  const msg = text.trim();
+  const lower = msg.toLowerCase();
 
-  const text = message.trim().toLowerCase();
-
-  // ======= Help =======
-  if (text === "help") {
-    bot.say(target, `${nick}: دستورات ربات 👇`);
-    bot.say(target, `ping, time, ontime, seen <nick>, chistan, answer <جواب>, join <کانال>, part <کانال>, addowner <nick>, welcome on/off`);
-    return;
+  // Ping
+  if (lower.startsWith("!ping")) {
+    const now = new Date();
+    bot.say(to, `Pong! ⏱ ${now.toLocaleTimeString()}`);
   }
 
-  // ======= Ping واقعی =======
-  if (text === "ping") {
-    const start = Date.now();
-    const token = Math.random().toString(36).slice(2, 8);
-    const handlePong = (ev) => {
-      if (ev.message === token) {
-        const latency = Date.now() - start;
-        bot.say(target, `${nick}: 🏓 pong from ${IRC_HOST} (${latency}ms)`);
-        bot.off("pong", handlePong);
+  // زمان آنلاین
+  if (lower.startsWith("!ontime") || lower.startsWith("!time")) {
+    const diff = Math.floor((Date.now() - startTime) / 1000);
+    const hours = Math.floor(diff / 3600);
+    const mins = Math.floor((diff % 3600) / 60);
+    bot.say(to, `⏳ من ${hours} ساعت و ${mins} دقیقه هست که آنلاینم!`);
+  }
+
+  // اضافه کردن owner
+  if (lower.startsWith("!owner add")) {
+    const parts = msg.split(" ");
+    const nick = parts[2];
+    if (owners.has(from)) {
+      owners.add(nick);
+      bot.say(to, `${nick} به عنوان owner اضافه شد ✅`);
+    } else {
+      bot.say(to, `${from} شما اجازه ندارید این دستور را اجرا کنید ❌`);
+    }
+  }
+
+  // Join کانال جدید
+  if (lower.startsWith("!join")) {
+    const parts = msg.split(" ");
+    if (owners.has(from) && parts[1]) {
+      bot.join(parts[1]);
+      bot.say(to, `به کانال ${parts[1]} پیوستم ✅`);
+    }
+  }
+
+  // Part از کانال
+  if (lower.startsWith("!part")) {
+    const parts = msg.split(" ");
+    if (owners.has(from) && parts[1]) {
+      bot.part(parts[1], "Goodbye 👋");
+    }
+  }
+
+  // شروع چیستان
+  if (lower.startsWith("!chistan")) {
+    const riddle = riddles[Math.floor(Math.random() * riddles.length)];
+    bot.say(to, `🤔 چیستان: ${riddle.q}`);
+
+    let answered = false;
+    const timerHint = setTimeout(() => {
+      if (!answered) bot.say(to, `💡 راهنمایی: ${riddle.hint}`);
+    }, 2 * 60 * 1000);
+
+    const timerEnd = setTimeout(() => {
+      if (!answered) bot.say(to, `⏰ وقت تموم شد! جواب درست: ${riddle.a}`);
+    }, 4 * 60 * 1000);
+
+    const answerListener = function (nick, chan, message) {
+      if (chan === to && !answered) {
+        const normalized = message.replace(/[\u200c]/g, "").trim().toLowerCase();
+        const ans = riddle.a.toLowerCase();
+        if (normalized === ans || normalized === toEnglish(ans)) {
+          answered = true;
+          clearTimeout(timerHint);
+          clearTimeout(timerEnd);
+          scores[nick] = (scores[nick] || 0) + 1;
+          bot.say(to, `✅ آفرین ${nick}! درست گفتی. امتیازت شد ${scores[nick]} 🎯`);
+          bot.removeListener("message", answerListener);
+        }
       }
     };
-    bot.on("pong", handlePong);
-    bot.raw(`PING :${token}`);
-    return;
+    bot.addListener("message", answerListener);
   }
 
-  // ======= Time =======
-  if (text === "time") {
-    bot.say(target, `${nick}: 🕒 ${new Date().toLocaleString()}`);
-    return;
-  }
-
-  // ======= OnTime =======
-  if (text === "ontime") {
-    const uptime = Math.floor((Date.now() - startTime) / 1000);
-    const h = Math.floor(uptime / 3600);
-    const m = Math.floor((uptime % 3600) / 60);
-    const s = uptime % 60;
-    bot.say(target, `${nick}: ⏱ BOT فعال بوده ${h}h ${m}m ${s}s`);
-    return;
-  }
-
-  // ======= Seen =======
-  if (text.startsWith("seen ")) {
-    const n = text.split(" ")[1];
-    if (seen[n]) {
-      const last = new Date(seen[n].time).toLocaleString();
-      bot.say(target, `${nick}: ${n} آخرین بار در ${seen[n].channel} بود (${last}) گفت: ${seen[n].message}`);
-    } else bot.say(target, `${nick}: از ${n} خبری ندارم!`);
-    return;
-  }
-
-  // ======= خوش‌آمد =======
-  if (text === "welcome on" && owners.includes(nick)) {
-    welcomeEnabled[target] = true;
-    bot.say(target, `${nick}: خوش‌آمدگویی فعال شد ✅`);
-    saveData();
-    return;
-  }
-  if (text === "welcome off" && owners.includes(nick)) {
-    welcomeEnabled[target] = false;
-    bot.say(target, `${nick}: خوش‌آمدگویی غیرفعال شد ❌`);
-    saveData();
-    return;
-  }
-
-  // ======= Owner اضافه کردن =======
-  if (text.startsWith("addowner ") && owners.includes(nick)) {
-    const newOwner = text.split(" ")[1];
-    if (!owners.includes(newOwner)) {
-      owners.push(newOwner);
-      saveData();
-      bot.say(target, `${nick}: ${newOwner} الان صاحب ربات شد 🔑`);
-    } else bot.say(target, `${nick}: قبلاً هست!`);
-    return;
-  }
-
-  // ======= Join / Part =======
-  if (text.startsWith("join ") && owners.includes(nick)) {
-    const ch = text.split(" ")[1];
-    bot.join(ch);
-    bot.say(target, `${nick}: وارد ${ch} شدم ✅`);
-    return;
-  }
-  if (text.startsWith("part ") && owners.includes(nick)) {
-    const ch = text.split(" ")[1];
-    bot.part(ch, "BYE 👋");
-    bot.say(target, `${nick}: از ${ch} خارج شدم ✅`);
-    return;
-  }
-
-  // ======= چیستان =======
-  if (text === "chistan") {
-    const chistans = [
-      { q: "چیه که هرچی ازش می‌کنی کوچیک‌تر میشه؟", a: "مداد" },
-      { q: "اون چیه که پرواز میکنه ولی بال نداره؟", a: "زمان" },
-      { q: "اون چیه که دو تا پا داره ولی راه نمیره؟", a: "شلوار" },
-      {"q": "chi chizi ast ke har chi azash bekeshi koochiktar mishe?", "a": "medad"},
-      {"q": "oon chie ke bal dare vali parvande nist?", "a": "zaman"},
-      {"q": "chi por az soorakh ast vali ab negah midare?", "a": "esfanji"},
-      {"q": "chi dahan dare vali harf nemizane?", "a": "rudkhane"},
-      {"q": "chi vaghti khoshk mikoni khis mishe?", "a": "havle"},
-      {"q": "chi hame ja hast vali dide nemishe?", "a": "havaa"},
-      {"q": "chi dare vali nemitune negah dare?", "a": "nafas"},
-      {"q": "chi ro mishe shekast vali narahat nemishe?", "a": "sokoot"},
-      {"q": "chi har che bishtar dashte bashi kamtar mibini?", "a": "tariki"},
-      {"q": "chi rah mire vali pa nadare?", "a": "sa-at"}
-    ];
-    const random = chistans[Math.floor(Math.random() * chistans.length)];
-    activeChistans[target] = { q: random.q, a: random.a, time: Date.now(), askedBy: nick };
-    bot.say(target, `${nick}: 🤔 ${random.q} (۴ دقیقه وقت داری)`);
-    setTimeout(() => {
-      if (activeChistans[target]) {
-        bot.say(target, `${nick}: ⏰ وقت تموم شد! جواب درست: ${random.a}`);
-        delete activeChistans[target];
-      }
-    }, 240000);
-    return;
-  }
-
-  if (text.startsWith("answer ")) {
-    const answer = text.split(" ").slice(1).join(" ").trim();
-    const current = activeChistans[target];
-    if (current) {
-      if (answer.includes(current.a) || current.a.includes(answer)) {
-        bot.say(target, `${nick}: 🎉 آفرین درست گفتی! جواب ${current.a} بود.`);
-        scores[nick] = (scores[nick] || 0) + 1;
-        delete activeChistans[target];
-      } else {
-        bot.say(target, `${nick}: ❌ نه، اشتباه گفتی!`);
-      }
-      saveData();
-    }
-    return;
+  // نمایش امتیازها
+  if (lower.startsWith("!score")) {
+    const entries = Object.entries(scores)
+      .map(([nick, sc]) => `${nick}: ${sc}`)
+      .join(", ");
+    bot.say(to, entries || "هیچ امتیازی ثبت نشده هنوز 😅");
   }
 });
 
-// ======= خوش‌آمد خودکار =======
-bot.on("join", (ev) => {
-  const { nick, channel } = ev;
-  if (nick === BOT_NICK) return;
-  if (nick.toLowerCase() === OWNER.toLowerCase()) {
-    bot.say(channel, `🎖 خوش‌اومدی فرمانده ${nick}! ممنون برای ساخت BOTING ❤️`);
-  } else if (welcomeEnabled[channel] !== false) {
-    const welcomes = [
-      `سلام ${nick}، خوش اومدی 🌸`,
-      `${nick} اومد! همه دست بزنید 👏`,
-      `یه ${nick} جدید اومده 😄`,
-      `درود بر ${nick} عزیز! ☀️`,
-      `${nick} خوش اومدی به ${channel} 💫`,
-    ];
-    const msg = welcomes[Math.floor(Math.random() * welcomes.length)];
-    bot.say(channel, msg);
-  }
-});
+// تبدیل فارسی به انگلیسی برای مقایسه جواب‌ها
+function toEnglish(str) {
+  const map = {
+    ا: "a",
+    ب: "b",
+    پ: "p",
+    ت: "t",
+    ث: "s",
+    ج: "j",
+    چ: "ch",
+    ح: "h",
+    خ: "kh",
+    د: "d",
+    ر: "r",
+    ز: "z",
+    ژ: "zh",
+    س: "s",
+    ش: "sh",
+    ف: "f",
+    ق: "gh",
+    ک: "k",
+    گ: "g",
+    ل: "l",
+    م: "m",
+    ن: "n",
+    و: "v",
+    ه: "h",
+    ی: "y",
+  };
+  return str
+    .split("")
+    .map((c) => map[c] || c)
+    .join("");
+}
+
+console.log("🤖 MySmartBot در حال اجراست...");
