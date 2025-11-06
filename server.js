@@ -4,7 +4,22 @@ const express = require("express");
 const fs = require("fs-extra");
 const path = require("path");
 const translate = require("translate-google"); // v1.5.0
-const chalk = require("chalk");
+const chalk = require("chalk")
+const welcome = require("./commands/welcome");  // ایمپورت دستور خوش‌آمدگویی
+
+// سایر کدها و تنظیمات...
+
+client.on("join", (ev) => {
+  const nick = ev.nick;
+  const channel = ev.channel;
+  if (!nick) return;
+  
+  ensureChannel(channel); // بررسی کانال
+  updateSeen(nick, channel, "<joined>");
+
+  // برای ارسال پیام خوش‌آمدگویی
+  welcome.handleJoin(client, nick, channel, data);  // فراخوانی تابع خوش‌آمدگویی
+});
 
 // ---------- Config ----------
 const IRC_HOST = process.env.IRC_HOST || "irc.mahdkoosh.com";
