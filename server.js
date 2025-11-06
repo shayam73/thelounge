@@ -29,6 +29,17 @@ const DATA_FILE = process.env.DATA_FILE || path.join(process.cwd(), "data.json")
 const PORT = Number(process.env.PORT || 10000);
 const ADMIN_TOKEN = process.env.ADMIN_TOKEN || ""; // optional for HTTP admin
 const BOT_VERSION = process.env.BOT_VERSION || "3.0";
+const IRC = require("irc-framework");
+  auto_reconnect: true
+});
+
+// رویداد join برای زمانی که یک کاربر وارد کانال می‌شود
+client.on("join", (ev) => {
+  const nick = ev.nick;
+  const channel = ev.channel;
+  if (!nick) return;
+  // کدهای خوشامدگویی و پردازش‌های دیگر
+});
 
 // ---------- Data persistence ----------
 function ensureDataFile() {
