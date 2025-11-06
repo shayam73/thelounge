@@ -1,166 +1,128 @@
 import irc from "irc";
+import fs from "fs";
 import express from "express";
 
-// سرور ساده برای Render (برای بیدار نگه داشتن)
-const app = express();
-const PORT = process.env.PORT || 3000;
-app.get("/", (req, res) => res.send("🤖 BOTING IRC Bot is running..."));
-app.listen(PORT, () => console.log(`🌐 Web active on port ${PORT}`));
+// 📂 خواندن لیست معماها از فایل riddles.json
+const riddles = JSON.parse(fs.readFileSync("riddles.json", "utf8"));
 
-// تنظیمات اصلی IRC
-const config = {
-  server: "irc.mahdkoosh.com",
-  nick: "BOTING",
-  channels: ["#gap", "#iran", "#BOTING"],
-  userName: "BOT",
-  realName: "BOT v4.0",
-  port: 6667,
-  autoConnect: true,
-};
+// 👑 مدیران
+const owners = ["YourNick"]; // 👈 اسم IRC خودت رو اینجا بذار
+const scores = {};
 
-const client = new irc.Client(config.server, config.nick, {
-  channels: config.channels,
-  userName: config.userName,
-  realName: config.realName,
-  port: config.port,
-  autoConnect: config.autoConnect,
+// 🛰️ اتصال ربات به سرور IRC
+const client = new irc.Client("irc.libera.chat", "BOTING", {
+  channels: ["#gap", "#iran", "#boting"],
 });
 
-let owners = ["Artesh"]; // صاحبان ربات
-let scores = {}; // امتیازها
-let riddles = [
-  { q: "چی چیزی است که پر است ولی خالیست؟", a: "توری" },
-  { q: "اون چیه هرچی بیشتر می‌کِشی کوتاه‌تر میشه؟", a: "سیگار" },
-  { q: "چی بدون نفس نفس می‌زنه؟", a: "ساعت" },
-  { q: "اون چیه تو شب میاد و صبح میره؟", a: "ستاره" },
-];
-
-// زمانی که وصل شد
+// 🟢 وقتی ربات بالا میاد
 client.addListener("registered", () => {
-  console.log("✅ BOTING connected to IRC:", config.server);
-  client.say("#gap", "🤖 BOTING v4.0 online! Type !help for commands");
+  console.log("🤖 BOTING آماده اجراست ...");
 });
 
-// خوش‌آمد
+// 🎉 خوش‌آمدگویی خودکار
 client.addListener("join", (channel, nick) => {
-  if (nick === "Artesh") {
-    client.say(channel, "🎖 سلام Artesh! خسته نباشی بابت ساخت BOTING ❤️");
+  if (nick === "BOTING") return; // خودش رو خوش‌آمد نگو
+  if (nick.toLowerCase() === "artesh") {
+    client.say(channel, `🎖️ خوش اومدی آرش خالق ربات BOTING! 💪 ممنون برای ساخت این پروژه!`);
   } else {
-    client.say(channel, `👋 خوش اومدی ${nick}!`);
+    client.say(channel, `👋 Welcome ${nick}! خوش اومدی به ${channel} 🌷`);
   }
 });
 
-// مدیریت پیام‌ها
-client.addListener("message", (from, to, message) => {
-  const msg = message.trim();
+// 💬 واکنش به پیام‌ها
+client.addListener("message", (from, to, msg) => {
   const lower = msg.toLowerCase();
 
-  // دستور help
-  if (lower === "!help") {
-    client.say(
-      to,
-      `📘 Available Commands:
-!ping → بررسی وضعیت ربات
-!time → ساعت فعلی
-!ontime → زمان فعال بودن ربات
-!join #channel → پیوستن به کانال
-!part #channel → ترک کانال
-!addowner <nick> → افزودن مدیر
-!riddle → دریافت چیستان
-!score → مشاهده امتیاز
-!challenge <nick> → چالش دو نفره
-!help → نمایش راهنما`
-    );
+  // 🔹 پینگ
+  if (lower === "!ping") {
+    client.say(to, `🏓 pong (${new Date().toLocaleTimeString()})`);
   }
 
-  // Ping
-  else if (lower === "!ping") {
-    client.say(to, `🏓 Pong! ${new Date().toLocaleTimeString()}`);
+  // 🔹 اطلاعات
+  else if (lower === "!about") {
+    client.say(to, "🤖 من BOTING هستم، ربات چت، معما و چالش ساخته شده توسط Artesh!");
   }
 
-  // زمان فعلی
-  else if (lower === "!time") {
-    const now = new Date();
-    client.say(to, `🕒 زمان فعلی: ${now.toLocaleTimeString()} (${now.toLocaleDateString()})`);
-  }
-
-  // زمان فعال بودن
-  else if (lower === "!ontime") {
-    client.say(to, "⚡ BOTING از زمان اتصال همچنان فعاله!");
-  }
-
-  // جوین کانال
+  // 🔹 پیوستن به کانال
   else if (lower.startsWith("!join ")) {
     const chan = msg.split(" ")[1];
     if (owners.includes(from)) {
       client.join(chan);
       client.say(to, `✅ Joined ${chan}`);
-    } else client.say(to, "❌ فقط مدیران می‌تونن این دستور رو بزنن.");
+    } else {
+      client.say(to, "❌ فقط مدیران می‌تونن از این دستور استفاده کنن.");
+    }
   }
 
-  // ترک کانال
+  // 🔹 ترک کانال
   else if (lower.startsWith("!part ")) {
     const chan = msg.split(" ")[1];
     if (owners.includes(from)) {
       client.part(chan);
-      client.say(to, `🚪 Left ${chan}`);
-    } else client.say(to, "❌ فقط مدیران می‌تونن این دستور رو بزنن.");
+      client.say(to, `👋 Left ${chan}`);
+    } else {
+      client.say(to, "❌ فقط مدیران می‌تونن از این دستور استفاده کنن.");
+    }
   }
 
-  // افزودن owner جدید
+  // 🔹 اضافه کردن مدیر
   else if (lower.startsWith("!addowner ")) {
     if (owners.includes(from)) {
       const newOwner = msg.split(" ")[1];
       owners.push(newOwner);
       client.say(to, `👑 ${newOwner} به لیست مدیران اضافه شد!`);
-    } else client.say(to, "❌ فقط مدیران می‌تونن مدیر جدید اضافه کنن.");
+    } else {
+      client.say(to, "❌ فقط مدیران می‌تونن مدیر جدید اضافه کنن.");
+    }
   }
 
-  // چیستان
+  // 🔹 معما
   else if (lower === "!riddle") {
     const r = riddles[Math.floor(Math.random() * riddles.length)];
-    client.say(to, `🧩 چیستان: ${r.q}`);
-    client.say(to, "(برای پاسخ، جواب را تایپ کنید)");
-    client.pendingRiddle = { question: r.q, answer: r.a, user: from, channel: to };
+    client.say(to, `🧩 سوال: ${r.q}`);
+    client.pendingRiddle = { q: r.q, a: r.a, channel: to };
   }
 
-  // پاسخ به چیستان
+  // 🔹 پاسخ معما
   else if (client.pendingRiddle && to === client.pendingRiddle.channel) {
-    const guess = msg.replace(/[a-zA-Z]/g, (ch) => ch); // برای تشخیص فارسی/انگلیسی
-    if (guess.includes(client.pendingRiddle.answer)) {
+    const guess = msg.replace(/[A-Za-zآ-ی]/g, (ch) => ch.toLowerCase());
+    if (guess.includes(client.pendingRiddle.a)) {
       client.say(to, `🎉 آفرین ${from}! جواب درست بود ✅`);
       scores[from] = (scores[from] || 0) + 10;
       client.pendingRiddle = null;
     }
   }
 
-  // امتیاز
+  // 🔹 امتیاز
   else if (lower === "!score") {
     const score = scores[from] || 0;
-    client.say(to, `🏅 ${from} امتیاز شما: ${score}`);
+    client.say(to, `🏅 امتیاز شما ${from}: ${score}`);
   }
 
-  // چالش دو نفره
+  // 🔹 چالش دونفره
   else if (lower.startsWith("!challenge ")) {
     const opponent = msg.split(" ")[1];
-    if (!opponent) return client.say(to, "❗ نام کاربر را وارد کن.");
-    client.say(to, `⚔️ ${from} ${opponent} را به چالش دعوت کرده!`);
-    client.say(to, `🎮 هر دو با !ready تایپ کنید تا شروع کنیم.`);
+    if (!opponent)
+      return client.say(to, "⚠️ لطفا نام کاربر را بنویس!");
+    client.say(to, `⚔️ ${from} ${opponent} را به چالش دعوت کرد!`);
+    client.say(to, "برای شروع هر دو بنویسید !ready");
     client.challenge = { p1: from, p2: opponent, ready: [] };
   }
 
+  // 🔹 تایید شروع چالش
   else if (lower === "!ready" && client.challenge) {
     const ch = client.challenge;
     if (ch.ready.includes(from)) return;
     ch.ready.push(from);
     if (ch.ready.length === 2) {
-      client.say(to, "🔥 چالش شروع شد! اولین کسی که جواب درست بده برنده‌ست!");
+      client.say(to, "🔥 چالش شروع شد! اولین کسی که جواب درست بده برنده است!");
       const r = riddles[Math.floor(Math.random() * riddles.length)];
       ch.riddle = r;
       client.say(to, `🧠 سوال: ${r.q}`);
     }
   }
 
+  // 🔹 پاسخ به چالش
   else if (client.challenge && client.challenge.riddle && to === "#gap") {
     const r = client.challenge.riddle;
     if (msg.includes(r.a)) {
@@ -168,16 +130,14 @@ client.addListener("message", (from, to, message) => {
       client.say(to, `🏆 ${winner} برنده چالش شد!`);
       scores[winner] = (scores[winner] || 0) + 20;
       client.challenge = null;
-		// --- نگه داشتن ربات آنلاین در Render ---
-import express from "express";
-const app = express();
+    }
+  }
+});
 
+// --- نگه داشتن ربات آنلاین در Render ---
+const app = express();
 app.get("/", (req, res) => {
   res.send("🤖 BOTING is alive and running!");
 });
-
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
-  console.log(`🌐 Web server running on port ${PORT}`);
-});
-    }
+app.listen(PORT, () => console.log(`🌐 Web server running on port ${PORT}`));
